@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zip-Clip Marketing: Job Request</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --orange:#FF8200;
+    --orange-deep:#D9670A;
+    --charcoal:#3C3A3C;
+    --charcoal-2:#2A2829;
+    --charcoal-soft:#615F60;
+    --border:#E7E1D6;
+    --bg:#FAF7F1;
+    --cut:16px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);font-family:'Open Sans',sans-serif;color:var(--charcoal);}
+  h1,h2,.kanit{font-family:'Kanit',sans-serif;}
+
+  header{background:linear-gradient(135deg,var(--charcoal) 0%,var(--charcoal-2) 100%);padding:30px 22px 60px;position:relative;overflow:hidden;}
+  header::before{content:"";position:absolute;inset:0;opacity:.5;background-image:repeating-linear-gradient(115deg, transparent 0 38px, #ffffff14 38px 39px);pointer-events:none;}
+  header::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,#FF820038,transparent 70%);}
+  .inner{max-width:480px;margin:0 auto;position:relative;}
+  .eyebrow{color:var(--orange);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
+  header h1{color:#fff;font-size:26px;margin:6px 0 8px;font-weight:800;}
+  header p{color:#D8D6D4;font-size:13.5px;margin:0;line-height:1.5;}
+
+  main{max-width:480px;margin:-38px auto 60px;padding:0 20px;position:relative;}
+  .card{background:#fff;border:1px solid var(--border);clip-path:polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, 0 100%);padding:26px 24px 24px;filter:drop-shadow(0 1px 2px rgba(60,58,60,.06)) drop-shadow(0 10px 28px rgba(60,58,60,.1));}
+
+  label{display:block;font-family:'Kanit',sans-serif;font-weight:600;font-size:12.5px;color:var(--charcoal-soft);margin:18px 0 6px;}
+  label:first-of-type{margin-top:0;}
+  label.req::after{content:" *";color:var(--orange);}
+  input[type=text],input[type=date],select,textarea{
+    width:100%;border:1px solid var(--border);border-radius:9px;padding:11px 12px;font-size:14px;
+    font-family:'Open Sans',sans-serif;background:#fff;color:var(--charcoal);
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--orange);outline-offset:1px;border-color:var(--orange);}
+  textarea{min-height:90px;resize:vertical;}
+
+  .priority-row{display:flex;gap:8px;margin-top:6px;}
+  .priority-btn{flex:1;border:1px solid var(--border);background:#fff;border-radius:9px;padding:11px;text-align:center;font-family:'Kanit',sans-serif;font-weight:600;font-size:13px;cursor:pointer;color:var(--charcoal-soft);display:flex;align-items:center;justify-content:center;gap:6px;}
+  .priority-btn.active[data-p="Standard"]{background:#2F5F8A14;border-color:#2F5F8A;color:#2F5F8A;}
+  .priority-btn.active[data-p="Urgent"]{background:#FFE5E5;border-color:#B33A3A;color:#B33A3A;}
+
+  .file-drop{border:1.5px dashed var(--border);border-radius:11px;padding:18px;text-align:center;cursor:pointer;background:var(--bg);}
+  .file-drop:hover{border-color:var(--orange);}
+  .file-drop .icon{width:26px;height:26px;color:var(--charcoal-soft);margin:0 auto 6px;display:block;}
+  .file-drop .ftext{font-size:12.5px;color:var(--charcoal-soft);}
+  .file-drop .flink{color:var(--orange-deep);font-weight:700;}
+  #fileInput{display:none;}
+  .file-list{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
+  .file-row{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;background:#fff;}
+  .file-row .icon{width:16px;height:16px;color:var(--charcoal-soft);flex-shrink:0;}
+  .file-row .fname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .file-row .fsize{color:var(--charcoal-soft);flex-shrink:0;}
+  .file-row .frm{border:none;background:none;color:var(--charcoal-soft);cursor:pointer;font-size:14px;line-height:1;padding:2px 4px;}
+  .file-hint{font-size:11px;color:var(--charcoal-soft);margin-top:6px;}
+
+  button.submit{width:100%;background:var(--orange);color:#fff;border:none;font-family:'Kanit',sans-serif;font-weight:700;font-size:15px;padding:14px;border-radius:9px;cursor:pointer;margin-top:26px;}
+  button.submit:hover{background:var(--orange-deep);}
+  button.submit:disabled{opacity:.5;cursor:default;}
+  .error{color:#B33A3A;font-size:12px;margin-top:8px;display:none;}
+
+  .success{display:none;text-align:center;padding:44px 20px;}
+  .success .tick{width:52px;height:52px;border-radius:50%;background:#1F7A66;color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+  .success .tick svg{width:24px;height:24px;}
+  .success h2{font-size:20px;margin:0 0 8px;}
+  .success p{color:var(--charcoal-soft);font-size:13px;}
+  .success button{margin-top:20px;background:none;border:1px solid var(--border);border-radius:9px;padding:10px 20px;font-family:'Kanit',sans-serif;font-weight:600;font-size:13px;color:var(--charcoal);cursor:pointer;}
+</style>
+</head>
+<body>
+<header>
+  <div class="inner">
+    <div class="eyebrow">Zip-Clip Marketing</div>
+    <h1>Request a marketing job</h1>
+    <p>A graphic, a post, a datasheet, a promo, anything you need from us. We'll pick it up and allocate it.</p>
+  </div>
+</header>
+
+<main>
+  <div class="card">
+    <form id="reqForm">
+      <label class="req">Your name</label>
+      <input type="text" id="requestedBy" list="nameList" placeholder="e.g. Ben Stones" required>
+      <datalist id="nameList">
+        <option>Ben Stones</option>
+        <option>Chris Appleton</option>
+        <option>Gemma Lawless</option>
+        <option>Josh Wade</option>
+        <option>Liam Cook</option>
+        <option>Toby House</option>
+        <option>James Horton</option>
+        <option>Ryan Meredith</option>
+        <option>Nicolette Conradie</option>
+        <option>Matt Clay-Michael</option>
+        <option>Steve Goldsworthy</option>
+      </datalist>
+
+      <label class="req">What do you need?</label>
+      <input type="text" id="title" placeholder="Short title, e.g. 'A5 flyer for CEF Wigston'" required>
+
+      <label>Any details?</label>
+      <textarea id="description" placeholder="Sizes, deadlines, who it's for, links to reference material..."></textarea>
+
+      <label>When do you need it?</label>
+      <input type="date" id="neededBy">
+
+      <label>Priority</label>
+      <div class="priority-row">
+        <button type="button" class="priority-btn active" data-p="Standard">Standard</button>
+        <button type="button" class="priority-btn" data-p="Urgent">Urgent</button>
+      </div>
+
+      <label>Attach files or images</label>
+      <div class="file-drop" id="fileDrop">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5 12.4 19a5 5 0 0 1-7-7l8-8a3.5 3.5 0 0 1 5 5l-8 8a2 2 0 0 1-3-3l7-7"/></svg>
+        <div class="ftext"><span class="flink">Click to attach</span> or drag files here</div>
+      </div>
+      <input type="file" id="fileInput" multiple>
+      <div class="file-list" id="fileList"></div>
+      <div class="file-hint">Photos, PDFs, docs, up to about 15MB in total.</div>
+
+      <div class="error" id="formError">Please add your name and what you need before sending.</div>
+      <button type="submit" class="submit" id="submitBtn">Send request</button>
+    </form>
+
+    <div class="success" id="successState">
+      <div class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.5 5.5L20 7"/></svg></div>
+      <h2>Request sent</h2>
+      <p>Thanks. The marketing team will pick this up and allocate it.</p>
+      <button id="newRequestBtn">Send another request</button>
+    </div>
+  </div>
+</main>
+
+<script>
+  // Paste your Apps Script Web app URL here (see request-intake-apps-script.js for setup steps)
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx-cZ6y8VrTAgUn4IoxbjV4asC3VVbA2F222VSbJRqqcg-iNjPodE8T86xmyq5SApGn/exec";
+  const MAX_TOTAL_BYTES = 15 * 1024 * 1024;
+
+  let priority = "Standard";
+  let files = [];
+
+  document.querySelectorAll('.priority-btn').forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll('.priority-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      priority = b.dataset.p;
+    };
+  });
+
+  const fileDrop = document.getElementById('fileDrop');
+  const fileInput = document.getElementById('fileInput');
+  const fileList = document.getElementById('fileList');
+
+  fileDrop.onclick = () => fileInput.click();
+  fileDrop.ondragover = (e) => { e.preventDefault(); fileDrop.style.borderColor = "var(--orange)"; };
+  fileDrop.ondragleave = () => { fileDrop.style.borderColor = ""; };
+  fileDrop.ondrop = (e) => {
+    e.preventDefault();
+    fileDrop.style.borderColor = "";
+    addFiles(e.dataTransfer.files);
+  };
+  fileInput.onchange = () => addFiles(fileInput.files);
+
+  function addFiles(fileListObj) {
+    Array.from(fileListObj).forEach(f => files.push(f));
+    fileInput.value = "";
+    renderFileList();
+  }
+
+  function fmtSize(bytes) {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  function renderFileList() {
+    fileList.innerHTML = files.map((f, i) => `
+      <div class="file-row">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="2.5" width="15" height="19" rx="1.6"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg>
+        <span class="fname">${f.name}</span>
+        <span class="fsize">${fmtSize(f.size)}</span>
+        <button type="button" class="frm" data-i="${i}">&times;</button>
+      </div>`).join("");
+    fileList.querySelectorAll('.frm').forEach(b => b.onclick = () => {
+      files.splice(parseInt(b.dataset.i, 10), 1);
+      renderFileList();
+    });
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result.split(",")[1]);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  document.getElementById('reqForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const requestedBy = document.getElementById('requestedBy').value.trim();
+    const title = document.getElementById('title').value.trim();
+    const errorBox = document.getElementById('formError');
+
+    if (!requestedBy || !title) { errorBox.textContent = "Please add your name and what you need before sending."; errorBox.style.display = 'block'; return; }
+
+    const totalBytes = files.reduce((s, f) => s + f.size, 0);
+    if (totalBytes > MAX_TOTAL_BYTES) { errorBox.textContent = "Those files add up to more than 15MB total, please remove one or two."; errorBox.style.display = 'block'; return; }
+
+    errorBox.style.display = 'none';
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = "Sending...";
+
+    Promise.all(files.map(f => fileToBase64(f).then(data => ({ filename: f.name, mimeType: f.type || "application/octet-stream", data }))))
+      .then(attachments => {
+        const payload = {
+          requestedBy,
+          title,
+          description: document.getElementById('description').value.trim(),
+          priority,
+          neededBy: document.getElementById('neededBy').value,
+          attachments
+        };
+        return fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+      })
+      .then(() => {
+        document.getElementById('reqForm').style.display = 'none';
+        document.getElementById('successState').style.display = 'block';
+      })
+      .catch(() => {
+        btn.disabled = false;
+        btn.textContent = "Send request";
+        errorBox.textContent = "Something went wrong sending that. Please try again.";
+        errorBox.style.display = 'block';
+      });
+  });
+
+  document.getElementById('newRequestBtn').onclick = () => {
+    document.getElementById('reqForm').reset();
+    document.getElementById('reqForm').style.display = 'block';
+    document.getElementById('successState').style.display = 'none';
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitBtn').textContent = "Send request";
+    document.querySelectorAll('.priority-btn').forEach(x => x.classList.remove('active'));
+    document.querySelector('.priority-btn[data-p="Standard"]').classList.add('active');
+    priority = "Standard";
+    files = [];
+    renderFileList();
+  };
+</script>
+</body>
+</html>
