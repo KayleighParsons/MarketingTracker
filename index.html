@@ -376,8 +376,11 @@ function capacityOn(person, isoDate) {
   return days && days.includes(dow) ? DAILY_CAPACITY_HOURS : 0;
 }
 function hoursDueOn(isoDate, person) {
+  // Counts all real work booked for the day, including completed items - this
+  // reflects actual workload/capacity pushed that day, not just what's still
+  // outstanding. Only cancelled work (which never happened) is excluded.
   const itemHours = state.items
-    .filter(i => (i.workDate || i.deadline) === isoDate && !isFinishedStatus(i.status) && inRegion(i.region))
+    .filter(i => (i.workDate || i.deadline) === isoDate && !isCancelledStatus(i.status) && inRegion(i.region))
     .filter(i => person === "Overview" || i.owner === person)
     .reduce((sum, i) => sum + (Number(i.estimatedHours) || 0), 0);
   const apptHours = state.appointments
