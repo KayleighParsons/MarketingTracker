@@ -159,33 +159,20 @@
 <script>
   // Paste your Apps Script Web app URL here (see request-intake-apps-script.js for setup steps)
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx-cZ6y8VrTAgUn4IoxbjV4asC3VVbA2F222VSbJRqqcg-iNjPodE8T86xmyq5SApGn/exec";
-  // Paste your Google Sheet ID here too (the long string in the sheet's URL between /d/ and /edit).
-  // This lets the form show how booked up the team already is before someone picks a deadline.
-  // Leave as-is if you'd rather not show this, the form works fine without it.
-  const SHEET_ID = "PASTE_YOUR_SHEET_ID_HERE";
   const MAX_TOTAL_BYTES = 15 * 1024 * 1024;
 
+  // Team capacity comes from the dashboard script as daily totals only (no job details),
+  // so the Google Sheet itself can stay private.
   let capacityData = null;
-  if (SHEET_ID && SHEET_ID !== "PASTE_YOUR_SHEET_ID_HERE") {
-    fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Capacity`)
-      .then(r => r.text())
-      .then(text => {
-        const json = JSON.parse(text.slice(47, -2));
-        if (!json.table || !json.table.rows) return;
-        capacityData = {};
-        json.table.rows.forEach(row => {
-          const c = row.c;
-          let dateVal = c[0]?.v || "";
-          if (typeof dateVal === "string" && dateVal.startsWith("Date(")) {
-            const nums = dateVal.match(/-?\d+/g).map(Number);
-            dateVal = `${nums[0]}-${String(nums[1] + 1).padStart(2, "0")}-${String(nums[2]).padStart(2, "0")}`;
-          }
-          capacityData[dateVal] = { due: Number(c[1]?.v) || 0, cap: Number(c[2]?.v) || 0 };
-        });
-        updateCapacityHint();
-      })
-      .catch(() => {}); // Quietly do nothing if this fails, it's a nice-to-have, not essential to the form working.
-  }
+  fetch(APPS_SCRIPT_URL + "?action=capacity")
+    .then(r => r.json())
+    .then(res => {
+      if (!res.ok || !res.days) return;
+      capacityData = {};
+      res.days.forEach(d => { capacityData[d.date] = { due: Number(d.due) || 0, cap: Number(d.cap) || 0 }; });
+      updateCapacityHint();
+    })
+    .catch(() => {}); // Quietly do nothing if this fails, it's a nice-to-have, not essential to the form working.
 
   function updateCapacityHint() {
     const hintEl = document.getElementById('capHint');
