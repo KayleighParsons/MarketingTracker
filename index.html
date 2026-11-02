@@ -2417,7 +2417,14 @@ function socialPrev() {
   const from = addDays(today(), -2 * S.socialDays), to = addDays(today(), -S.socialDays);
   return all.filter(r => r.date >= from && r.date < to && (S.socialNet === "all" || r.network === S.socialNet));
 }
-function sumBy(rows, f) { return rows.reduce((s, r) => s + n0(r[f]), 0); }
+function sumBy(rows, f) { return rows.reduce((s, r) => s + (r._noSum ? 0 : n0(r[f])), 0); }
+// Where a channel has daily account totals (TikTok's Overview export), those are the figures: the same channel's
+// posts in that date range still count as posts, but their views and interactions aren't added again.
+function markDailyCovered(all) {
+  const span = {};
+  all.forEach(r => { if (r.title === "(network total)") { const x = span[r.network] || (span[r.network] = { a: r.date, b: r.date }); if (r.date < x.a) x.a = r.date; if (r.date > x.b) x.b = r.date; } });
+  all.forEach(r => { const x = span[r.network]; r._noSum = !!(x && r.title !== "(network total)" && r.date >= x.a && r.date <= x.b); });
+}
 function deltaHtml(cur, prev) {
   if (!prev) return `<span class="muted">no earlier data</span>`;
   const d = Math.round((cur - prev) / prev * 100);
@@ -2425,6 +2432,7 @@ function deltaHtml(cur, prev) {
 }
 function viewSocials() {
   const all = D().socials || [];
+  markDailyCovered(all);
   const admin = me().isAdmin;
   const nets = [...new Set(all.map(r => r.network))].sort();
   const rows = socialRows(), prev = socialPrev();
@@ -2441,7 +2449,7 @@ function viewSocials() {
   if (!all.length) return `<div class="page-head"><div><h1>Socials</h1></div></div>
     ${socialUploadCard()}`;
 
-  return `<div class="page-head"><div><h1>Socials</h1><div class="sub">From HubSpot social reports · last data import ${esc(ago(last))}</div></div><div class="spacer"></div>
+  return `<div class="page-head"><div><h1>Socials</h1><div class="sub">From HubSpot social reports and TikTok Studio · last data import ${esc(ago(last))}</div></div><div class="spacer"></div>
     ${admin ? `<button class="btn" data-act="checkSocialEmail">Check email now</button>` : ""}${me().canSocials ? `<button class="btn primary" data-act="importSocialCsv">Upload report</button>` : ""}</div>
   <div class="filterbar">
     ${[30, 90, 180, 365].map(d => `<button class="chip ${S.socialDays === d ? "on" : ""}" data-sdays="${d}">${d === 365 ? "12 months" : d + " days"}</button>`).join("")}
@@ -2483,8 +2491,8 @@ function socialUploadCard() {
   return `<div class="card section">
     <div class="card-head"><h2>Upload a social report</h2><span class="muted small">Weekly or monthly</span></div>
     <label class="drop" id="socDrop" tabindex="0"><input type="file" id="socFile" accept=".xlsx,.xls,.csv" hidden>
-      <span class="drop-ic">${icon("requests", 22)}</span><b>Drop your HubSpot social export here, or click to choose it</b>
-      <span>Excel or CSV, straight from HubSpot (Social > Analyze > Export). Posts you've uploaded before are updated with their latest numbers, never counted twice.</span></label>
+      <span class="drop-ic">${icon("requests", 22)}</span><b>Drop your HubSpot or TikTok export here, or click to choose it</b>
+      <span>HubSpot: Social > Analyze > Export (Excel or CSV). TikTok: TikTok Studio > Analytics > Overview > Download data (the Overview CSV). Anything uploaded before is updated with the latest numbers, never counted twice.</span></label>
     ${list.length ? `<div class="tablewrap" style="margin-top:12px"><table class="t"><thead><tr><th>Upload</th><th>Posts dated</th><th class="num">Posts</th><th>When</th></tr></thead><tbody>${list.map(([src, g]) => `<tr><td>${esc(src)}</td><td class="small">${fmtDate(g.from, { day: "numeric", month: "short", year: "numeric" })} to ${fmtDate(g.to, { day: "numeric", month: "short", year: "numeric" })}</td><td class="num">${g.n}</td><td class="small muted">${esc(ago(g.at))}</td></tr>`).join("")}</tbody></table></div>` : ""}
   </div>`;
 }
@@ -2510,7 +2518,7 @@ async function handleSocialFile(file) {
     const out = await apiOk("importSocialRows", { rows, source: file.name.replace(/\.(xlsx?|csv)$/i, "") });
     if (!out.ok) throw new Error(out.error);
     await load(true);
-    toast(`${out.added} new post${out.added === 1 ? "" : "s"} added, ${out.updated} updated${out.skipped ? `, ${out.skipped} skipped` : ""}`);
+    toast(out.kind === "daily" ? `${out.network} daily totals: ${out.added} day${out.added === 1 ? "" : "s"} added, ${out.updated} updated` : `${out.added} new post${out.added === 1 ? "" : "s"} added, ${out.updated} updated${out.skipped ? `, ${out.skipped} skipped` : ""}`);
   } catch (e) { toast(e.message, true); }
 }
 afterRender.socials = () => {
@@ -2535,7 +2543,7 @@ afterRender.socials = () => {
   const rate = weeks.map(w => { const rr = rows.filter(r => r.date >= w && r.date < addDays(w, 7)); const im = sumBy(rr, "impressions"); return im ? +(sumBy(rr, "interactions") / im * 100).toFixed(1) : null; });
   lineChart("rateChart", weeks.map(w => fmtDate(w, { day: "numeric", month: "short" })), [{ label: "Engagement rate", color: cssVar("--orange"), data: rate }], "%");
   const dn = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const byDay = dn.map((_, i) => { const rr = rows.filter(r => r.title !== "(network total)" && ((new Date(r.date + "T00:00:00").getDay() + 6) % 7) === i); return rr.length ? Math.round(sumBy(rr, "interactions") / rr.length) : 0; });
+  const byDay = dn.map((_, i) => { const rr = rows.filter(r => r.title !== "(network total)" && ((new Date(r.date + "T00:00:00").getDay() + 6) % 7) === i); return rr.length ? Math.round(rr.reduce((a, r) => a + n0(r.interactions), 0) / rr.length) : 0; });
   barChart("dayChart", dn, [{ label: "Average interactions per post", data: byDay, color: cssVar("--orange") }], "interactions");
 };
 
